@@ -1,0 +1,16 @@
+{
+  "name": "@randock/try",
+  "version": "0.0.2",
+  "description": "Typed try/catch in typescript",
+  "author": "Jop Peters",
+  "private": false,
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc"
+  },
+  "main": "dist/try.js",
+  "types": "dist/try.d.ts",
+  "devDependencies": {
+    "typescript": "^4.7.3"
+  }
+}
