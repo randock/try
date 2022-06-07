@@ -1,16 +1,22 @@
 {
   "name": "@randock/try",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Typed try/catch in typescript",
   "author": "Jop Peters",
   "private": false,
   "license": "MIT",
   "scripts": {
-    "build": "tsc"
+    "prebuild": "jest",
+    "build": "tsc",
+    "test": "jest"
   },
   "main": "dist/try.js",
   "types": "dist/try.d.ts",
   "devDependencies": {
+    "@types/jest": "^28.1.1",
+    "jest": "^28.1.1",
+    "ts-jest": "^28.0.4",
+    "ts-node": "^10.8.1",
     "typescript": "^4.7.3"
   }
 }

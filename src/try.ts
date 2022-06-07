@@ -29,7 +29,7 @@ export class Try {
     this.runMethod = method;
   }
 
-  static to<T>(method: () => Promise<T>): Try {
+  static to<T>(method: () => T | Promise<T>): Try {
     return new Try(method);
   }
 
@@ -38,7 +38,7 @@ export class Try {
    *
    * @param method the catch block
    */
-  catch(method: (error: Error) => void | Promise<void>): Try;
+  catch<R>(method: (error: Error) => R | Promise<R>): Try;
 
   /**
    * Register a catch block.
@@ -46,9 +46,9 @@ export class Try {
    * @param type the type of the error that this catch block accepts
    * @param method the catch block
    */
-  catch<T extends Error>(
+  catch<T extends Error, R>(
     type: { new (...args): T } | { new (...args): T }[],
-    method: (error: T) => void | Promise<void>
+    method: (error: T) => R | Promise<R>
   ): Try;
 
   /**
@@ -77,7 +77,7 @@ export class Try {
    *
    * @param method
    */
-  async finally<T>(method: () => Promise<T>): Promise<T> {
+  async finally<T>(method: () => T | Promise<T>): Promise<T> {
     this.finallyMethod = method;
 
     return this.run<T>();
@@ -93,8 +93,6 @@ export class Try {
       // if it is not an error object, we will convert it
       if (!(e instanceof Error)) {
         e = new ObjectError("Non Error thrown as an error.", e);
-      } else {
-        e = new ObjectError(e.message);
       }
 
       // we need to sort the catch block, so the "null" type goes last
@@ -113,8 +111,7 @@ export class Try {
         // array?
         for (const acceptedType of catchBlock.types) {
           if (acceptedType === null || e instanceof acceptedType) {
-            await catchBlock.method(e);
-            return;
+            return await catchBlock.method(e);
           }
         }
       }
