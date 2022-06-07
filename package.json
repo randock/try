@@ -1,6 +1,6 @@
 {
   "name": "@randock/try",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Typed try/catch in typescript",
   "author": "Jop Peters",
   "private": false,
@@ -9,6 +9,10 @@
     "prebuild": "jest",
     "build": "tsc",
     "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/randock/try.git"
   },
   "main": "dist/try.js",
   "types": "dist/try.d.ts",

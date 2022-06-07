@@ -97,9 +97,9 @@ export class Try {
 
       // we need to sort the catch block, so the "null" type goes last
       this.catchBlocks.sort((a, b) => {
-        if (a.types === null && b.types !== null) {
+        if (a.types.includes(null) && !b.types.includes(null)) {
           return 1;
-        } else if (b.types === null) {
+        } else if (b.types.includes(null)) {
           return -1;
         }
 
