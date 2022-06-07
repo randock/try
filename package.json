@@ -6,6 +6,7 @@
   "private": false,
   "license": "MIT",
   "scripts": {
+    "prepublish": "yarn build",
     "prebuild": "jest",
     "build": "tsc",
     "test": "jest"
