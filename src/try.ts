@@ -2,46 +2,54 @@ import { ObjectError } from "./error/object.error";
 
 export class Try {
   /**
-   * The various catch blocks
+   * The various catch
+   *
    * @private
    */
   private catchBlocks: Array<Record<"types" | "method", any>> = [];
 
   /**
-   * The method that contains the try body
+   * The function that contains the try {} body.
+   *
    * @private
    */
-  private runMethod: CallableFunction = null;
+  private tryFunction: CallableFunction = null;
 
   /**
-   * The method that will be called finally {}
+   * The function that will be called finally {}.
+   *
    * @private
    */
-  private finallyMethod: CallableFunction = null;
+  private finallyFunction: CallableFunction = null;
 
   /**
-   * You should use the static try method
+   * You should use the static try method to construct.
    *
    * @param method
    * @private
    */
   private constructor(method: CallableFunction) {
-    this.runMethod = method;
+    this.tryFunction = method;
   }
 
+  /**
+   * Start the try/catch with this method, passing in the content of the normal try {} block.
+   *
+   * @param method
+   */
   static to<T>(method: () => T | Promise<T>): Try {
     return new Try(method);
   }
 
   /**
-   * Register a catch block.
+   * Register a catch (all) block.
    *
    * @param method the catch block
    */
   catch<R>(method: (error: Error) => R | Promise<R>): Try;
 
   /**
-   * Register a catch block.
+   * Register a catch block for (a) specific error(s).
    *
    * @param type the type of the error that this catch block accepts
    * @param method the catch block
@@ -52,7 +60,7 @@ export class Try {
   ): Try;
 
   /**
-   * Implementation of all above
+   * Implementation of all the above.
    *
    * @param param1
    * @param param2
@@ -78,7 +86,7 @@ export class Try {
    * @param method
    */
   async finally<T>(method: () => T | Promise<T>): Promise<T> {
-    this.finallyMethod = method;
+    this.finallyFunction = method;
 
     return this.run<T>();
   }
@@ -88,14 +96,14 @@ export class Try {
    */
   async run<T>(): Promise<T> {
     try {
-      return await this.runMethod();
+      return await this.tryFunction();
     } catch (e: any) {
       // if it is not an error object, we will convert it
       if (!(e instanceof Error)) {
         e = new ObjectError("Non Error thrown as an error.", e);
       }
 
-      // we need to sort the catch block, so the "null" type goes last
+      // we need to sort the catch block, so the "null" (is catch all) type goes last
       this.catchBlocks.sort((a, b) => {
         if (a.types.includes(null) && !b.types.includes(null)) {
           return 1;
@@ -108,7 +116,6 @@ export class Try {
 
       // find the first matching catch block
       for (const catchBlock of this.catchBlocks) {
-        // array?
         for (const acceptedType of catchBlock.types) {
           if (acceptedType === null || e instanceof acceptedType) {
             return await catchBlock.method(e);
@@ -119,8 +126,8 @@ export class Try {
       // no matching block, so throw the error
       throw e;
     } finally {
-      if (this.finallyMethod !== null) {
-        await this.finallyMethod();
+      if (this.finallyFunction !== null) {
+        await this.finallyFunction();
       }
     }
   }
