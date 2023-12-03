@@ -1,6 +1,6 @@
 import { ObjectError } from "./error/object.error";
 
-export class Try {
+export class Try<Response> {
   /**
    * The various catch
    *
@@ -13,7 +13,7 @@ export class Try {
    *
    * @private
    */
-  private tryFunction: CallableFunction = null;
+  private tryFunction: () => Response = null;
 
   /**
    * The function that will be called finally {}.
@@ -28,7 +28,7 @@ export class Try {
    * @param method
    * @private
    */
-  private constructor(method: CallableFunction) {
+  private constructor(method) {
     this.tryFunction = method;
   }
 
@@ -37,8 +37,8 @@ export class Try {
    *
    * @param method
    */
-  static to<T>(method: () => T | Promise<T>): Try {
-    return new Try(method);
+  static to<Response>(method: () => Response | Promise<Response>) {
+    return new Try<Response>(method);
   }
 
   /**
@@ -46,7 +46,7 @@ export class Try {
    *
    * @param method the catch block
    */
-  catch<R>(method: (error: Error) => R | Promise<R>): Try;
+  catch<ErrorResponse, T extends Try<Response>>(this: T, method: (error: Error) => ErrorResponse | Promise<ErrorResponse>): T;
 
   /**
    * Register a catch block for (a) specific error(s).
@@ -54,10 +54,11 @@ export class Try {
    * @param type the type of the error that this catch block accepts
    * @param method the catch block
    */
-  catch<T extends Error, R>(
-    type: { new (...args): T } | { new (...args): T }[],
-    method: (error: T) => R | Promise<R>
-  ): Try;
+  catch<E extends Error, ErrorResponse, T extends Try<Response>>(
+    this: T,
+    type: { new (...args): E } | { new (...args): E }[],
+    method: (error: E) => ErrorResponse | Promise<ErrorResponse>
+  ): T;
 
   /**
    * Implementation of all the above.
@@ -65,7 +66,7 @@ export class Try {
    * @param param1
    * @param param2
    */
-  catch(param1 = null, param2 = null): Try {
+  catch(param1 = null, param2 = null) {
     const method = param2 === null ? param1 : param2;
     let types = param2 !== null ? param1 : null;
 
@@ -85,16 +86,16 @@ export class Try {
    *
    * @param method
    */
-  async finally<T>(method: () => T | Promise<T>): Promise<T> {
+  async finally<T extends Try<Response>, FinallyResponse>(this: T, method: () => FinallyResponse | Promise<FinallyResponse>): Promise<Response> {
     this.finallyFunction = method;
 
-    return this.run<T>();
+    return this.run();
   }
 
   /**
    * You only need to call run, if you don't register a finally method
    */
-  async run<T>(): Promise<T> {
+  async run<T extends Try<Response>>(this: T): Promise<Response> {
     try {
       return await this.tryFunction();
     } catch (e: any) {

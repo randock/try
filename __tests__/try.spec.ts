@@ -15,7 +15,7 @@ describe("Try", () => {
       .catch(FirstCustomError, (error) => {
         errorThrown = true;
       })
-      .run<void>();
+      .run();
 
     expect(errorThrown).toBe(true);
   });
@@ -28,7 +28,7 @@ describe("Try", () => {
       .catch(FirstCustomError, (error) => {
         errorThrown = true;
       })
-      .run<void>();
+      .run();
 
     expect(errorThrown).toBe(true);
   });
@@ -41,7 +41,7 @@ describe("Try", () => {
       .catch([FirstCustomError, SecondCustomError], (error) => {
         errorThrown = true;
       })
-      .run<void>();
+      .run();
 
     expect(errorThrown).toBe(true);
   });
@@ -55,14 +55,14 @@ describe("Try", () => {
         errorThrown = true;
       })
       .catch(ChildOfFirstCustomError, (error) => {})
-      .run<void>();
+      .run();
 
     expect(errorThrown).toBe(true);
   });
 
   it("Should allow multiple catch blocks and order the catch all error last", async () => {
     let errorThrown = false;
-    await Try.to<void>(() => {
+    await Try.to(() => {
       throw new FirstCustomError();
     })
       .catch(() => {
@@ -71,14 +71,14 @@ describe("Try", () => {
       .catch(FirstCustomError, (error) => {
         errorThrown = true;
       })
-      .run<void>();
+      .run();
 
     expect(errorThrown).toBe(true);
   });
 
   it("Should call finally", async () => {
     let allGood = false;
-    await Try.to<void>(() => {
+    await Try.to(() => {
       throw new ChildOfFirstCustomError();
     })
       .catch(ChildOfFirstCustomError, (error) => {})
