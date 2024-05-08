@@ -1,12 +1,14 @@
 import { ObjectError } from "./error/object.error";
 
+export type AcceptFunction = (error: Error) => boolean;
+
 export class Try<Response> {
   /**
    * The various catch
    *
    * @private
    */
-  private catchBlocks: Array<Record<"types" | "method", any>> = [];
+  private catchBlocks: Array<{types?: any; checker?: AcceptFunction, method: CallableFunction }> = [];
 
   /**
    * The function that contains the try {} body.
@@ -41,12 +43,21 @@ export class Try<Response> {
     return new Try<Response>(method);
   }
 
+  catchIf<E extends Error, ErrorResponse = void, T extends Try<Response> = this>(this: T, checker: AcceptFunction, method: (error: E) => ErrorResponse | Promise<ErrorResponse>): T {
+    this.catchBlocks.push({
+      checker,
+      method,
+    });
+
+    return this;
+  }
+
   /**
    * Register a catch (all) block.
    *
    * @param method the catch block
    */
-  catch<ErrorResponse, T extends Try<Response>>(this: T, method: (error: Error) => ErrorResponse | Promise<ErrorResponse>): T;
+  catch<ErrorResponse, T extends Try<Response> = this>(this: T, method: (error: Error) => ErrorResponse | Promise<ErrorResponse>): T;
 
   /**
    * Register a catch block for (a) specific error(s).
@@ -54,9 +65,21 @@ export class Try<Response> {
    * @param type the type of the error that this catch block accepts
    * @param method the catch block
    */
-  catch<E extends Error, ErrorResponse, T extends Try<Response>>(
+  catch<E extends Error, ErrorResponse = void, T extends Try<Response> = this>(
     this: T,
     type: { new (...args): E } | { new (...args): E }[],
+    method: (error: E) => ErrorResponse | Promise<ErrorResponse>
+  ): T;
+
+  /**
+   * Register a catch block with an AcceptFunction
+   *
+   * @param type the type of the error that this catch block accepts
+   * @param method the catch block
+   */
+  catch<E extends Error, ErrorResponse = void, T extends Try<Response> = this>(
+    this: T,
+    type: AcceptFunction,
     method: (error: E) => ErrorResponse | Promise<ErrorResponse>
   ): T;
 
@@ -106,6 +129,10 @@ export class Try<Response> {
 
       // we need to sort the catch block, so the "null" (is catch all) type goes last
       this.catchBlocks.sort((a, b) => {
+        if (a.checker || b.checker) {
+          return a.checker ? -1 : 1;
+        }
+
         if (a.types.includes(null) && !b.types.includes(null)) {
           return 1;
         } else if (b.types.includes(null)) {
@@ -117,8 +144,16 @@ export class Try<Response> {
 
       // find the first matching catch block
       for (const catchBlock of this.catchBlocks) {
-        for (const acceptedType of catchBlock.types) {
-          if (acceptedType === null || e instanceof acceptedType) {
+        if (catchBlock.types) {
+          for (const acceptedType of catchBlock.types) {
+            if (acceptedType === null || e instanceof acceptedType) {
+              return await catchBlock.method(e);
+            }
+          }
+        }
+
+        if (catchBlock.checker !== undefined) {
+          if (catchBlock.checker(e)) {
             return await catchBlock.method(e);
           }
         }

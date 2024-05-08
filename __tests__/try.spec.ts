@@ -46,6 +46,31 @@ describe("Try", () => {
     expect(errorThrown).toBe(true);
   });
 
+  it("Should allow function to determine whether to accept or not", async () => {
+    let errorThrown = false;
+
+    await Try.to<void>(() => {
+      throw new FirstCustomError();
+    })
+      .catchIf((e) => true, (error) => {
+        errorThrown = true;
+      })
+      .run();
+
+    expect(errorThrown).toBe(true);
+  });
+
+  it("Should allow function to determine whether to accept or not (2)", async () => {
+    await expect(async () => {
+      await Try.to<void>(() => {
+        throw new FirstCustomError();
+      })
+      .catchIf((e) => false, (error) => {
+      })
+      .run()
+    }).rejects.toThrowError(FirstCustomError);
+  });
+
   it("Should allow multiple catch blocks and maintain order for typed errors", async () => {
     let errorThrown = false;
     await Try.to<void>(() => {
