@@ -19,6 +19,32 @@ describe("Try", () => {
 
     expect(errorThrown).toBe(true);
   });
+  
+  it("Should allow sync", async () => {
+    let errorThrown = false;
+    
+    Try.to<void>(() => {
+      throw new FirstCustomError();
+    })
+      .catch(FirstCustomError, (error) => {
+        errorThrown = true;
+      })
+      .runSync();
+
+    expect(errorThrown).toBe(true);
+  });  
+
+  it("Should allow sync exception", async () => {
+    const result = Try.to<boolean>(() => {
+      throw new FirstCustomError();
+    })
+      .catch(FirstCustomError, (error) => {
+       return true;
+      })
+      .runSync();
+
+    expect(result).toBe(true);
+  });
 
   it("Should allow error inheritance", async () => {
     let errorThrown = false;

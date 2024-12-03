@@ -115,10 +115,61 @@ export class Try<Response> {
     return this.run();
   }
 
+  runSync<T extends Try<Response>>(this: T): Response {
+    try {
+      return this.tryFunction();
+    } catch (e: any) {
+      // if it is not an error object, we will convert it
+      if (!(e instanceof Error)) {
+        e = new ObjectError("Non Error thrown as an error.", e);
+      }
+
+      // we need to sort the catch block, so the "null" (is catch all) type goes last
+      this.catchBlocks.sort((a, b) => {
+        if (a.checker || b.checker) {
+          return a.checker ? -1 : 1;
+        }
+
+        if (a.types.includes(null) && !b.types.includes(null)) {
+          return 1;
+        } else if (b.types.includes(null)) {
+          return -1;
+        }
+
+        return 0;
+      });
+
+      // find the first matching catch block
+      for (const catchBlock of this.catchBlocks) {
+        if (catchBlock.types) {
+          for (const acceptedType of catchBlock.types) {
+            if (acceptedType === null || e instanceof acceptedType) {
+              return catchBlock.method(e);
+            }
+          }
+        }
+
+        if (catchBlock.checker !== undefined) {
+          if (catchBlock.checker(e)) {
+            return catchBlock.method(e);
+          }
+        }
+      }
+
+      // no matching block, so throw the error
+      throw e;
+    } finally {
+      if (this.finallyFunction !== null) {
+         this.finallyFunction();
+      }
+    }
+  }
+
   /**
    * You only need to call run, if you don't register a finally method
    */
   async run<T extends Try<Response>>(this: T): Promise<Response> {
+    
     try {
       return await this.tryFunction();
     } catch (e: any) {
