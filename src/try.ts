@@ -122,6 +122,9 @@ export class Try<Response> {
       if (result instanceof Promise) {
         throw new AsyncMethodError('Cannot cal runSync if returnType of to() is a Promise. Use run() instead.');
       }
+
+      return result;
+      
     } catch (e: any) {
       if (e instanceof AsyncMethodError) {
         throw e;

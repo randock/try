@@ -33,6 +33,15 @@ describe("Try", () => {
       .runSync();
 
     expect(errorThrown).toBe(true);
+  });
+  
+  it("Should allow sync return", async () => {
+    const response = Try.to<boolean>(() => {
+      return true;
+    })
+      .runSync();
+
+    expect(response).toBe(true);
   }); 
 
   it("Should complain about sync", async () => {
