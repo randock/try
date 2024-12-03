@@ -1,5 +1,6 @@
 import { Try } from "@src/try";
 import { ObjectError } from "@src/error/object.error";
+import { AsyncMethodError } from "@src/error/async.method.error";
 
 class FirstCustomError extends Error {}
 class ChildOfFirstCustomError extends FirstCustomError {}
@@ -32,6 +33,13 @@ describe("Try", () => {
       .runSync();
 
     expect(errorThrown).toBe(true);
+  }); 
+
+  it("Should complain about sync", async () => {
+    expect(() => Try.to<void>(async () => {
+      const a = true;
+    })
+      .runSync()).toThrow(AsyncMethodError);
   });  
 
   it("Should allow sync exception", async () => {

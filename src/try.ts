@@ -1,3 +1,4 @@
+import { AsyncMethodError } from "@src/error/async.method.error";
 import { ObjectError } from "./error/object.error";
 
 export type AcceptFunction = (error: Error) => boolean;
@@ -117,8 +118,15 @@ export class Try<Response> {
 
   runSync<T extends Try<Response>>(this: T): Response {
     try {
-      return this.tryFunction();
+      const result =  this.tryFunction();
+      if (result instanceof Promise) {
+        throw new AsyncMethodError('Cannot cal runSync if returnType of to() is a Promise. Use run() instead.');
+      }
     } catch (e: any) {
+      if (e instanceof AsyncMethodError) {
+        throw e;
+      }
+      
       // if it is not an error object, we will convert it
       if (!(e instanceof Error)) {
         e = new ObjectError("Non Error thrown as an error.", e);
