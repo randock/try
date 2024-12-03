@@ -12,10 +12,9 @@ describe("Try", () => {
     await Try.to<void>(() => {
       throw new FirstCustomError();
     })
-      .catch(FirstCustomError, (error) => {
+      ._catch(FirstCustomError, (error) => {
         errorThrown = true;
-      })
-      .run();
+      });
 
     expect(errorThrown).toBe(true);
   });
@@ -25,10 +24,9 @@ describe("Try", () => {
     await Try.to<void>(() => {
       throw new ChildOfFirstCustomError();
     })
-      .catch(FirstCustomError, (error) => {
+      ._catch(FirstCustomError, (error) => {
         errorThrown = true;
-      })
-      .run();
+      });
 
     expect(errorThrown).toBe(true);
   });
@@ -38,10 +36,9 @@ describe("Try", () => {
     await Try.to<void>(() => {
       throw new FirstCustomError();
     })
-      .catch([FirstCustomError, SecondCustomError], (error) => {
+      ._catch([FirstCustomError, SecondCustomError], (error) => {
         errorThrown = true;
-      })
-      .run();
+      });
 
     expect(errorThrown).toBe(true);
   });
@@ -54,8 +51,7 @@ describe("Try", () => {
     })
       .catchIf((e) => true, (error) => {
         errorThrown = true;
-      })
-      .run();
+      });
 
     expect(errorThrown).toBe(true);
   });
@@ -67,7 +63,6 @@ describe("Try", () => {
       })
       .catchIf((e) => false, (error) => {
       })
-      .run()
     }).rejects.toThrowError(FirstCustomError);
   });
 
@@ -76,11 +71,10 @@ describe("Try", () => {
     await Try.to<void>(() => {
       throw new ChildOfFirstCustomError();
     })
-      .catch(FirstCustomError, (error) => {
+      ._catch(FirstCustomError, (error) => {
         errorThrown = true;
       })
-      .catch(ChildOfFirstCustomError, (error) => {})
-      .run();
+      ._catch(ChildOfFirstCustomError, (error) => {});
 
     expect(errorThrown).toBe(true);
   });
@@ -90,13 +84,12 @@ describe("Try", () => {
     await Try.to(() => {
       throw new FirstCustomError();
     })
-      .catch(() => {
+      ._catch(() => {
         // catch all "other" block
       })
-      .catch(FirstCustomError, (error) => {
+      ._catch(FirstCustomError, (error) => {
         errorThrown = true;
-      })
-      .run();
+      });
 
     expect(errorThrown).toBe(true);
   });
@@ -106,7 +99,7 @@ describe("Try", () => {
     await Try.to(() => {
       throw new ChildOfFirstCustomError();
     })
-      .catch(ChildOfFirstCustomError, (error) => {})
+      ._catch(ChildOfFirstCustomError, (error) => {})
       .finally(() => {
         allGood = true;
       });
@@ -117,7 +110,7 @@ describe("Try", () => {
   it("Should return success response", async () => {
     const allGood = await Try.to<boolean>(() => {
       return true;
-    }).run();
+    });
 
     expect(allGood).toBe(true);
   });
@@ -126,10 +119,9 @@ describe("Try", () => {
     const allGood = await Try.to<boolean>(() => {
       throw new FirstCustomError();
     })
-      .catch(FirstCustomError, () => {
+      ._catch(FirstCustomError, () => {
         return true;
-      })
-      .run();
+      });
 
     expect(allGood).toBe(true);
   });
@@ -141,10 +133,9 @@ describe("Try", () => {
         who: "does this",
       };
     })
-      .catch(ObjectError, () => {
+      ._catch(ObjectError, () => {
         errorThrown = true;
-      })
-      .run();
+      });
 
     expect(errorThrown).toBe(true);
   });

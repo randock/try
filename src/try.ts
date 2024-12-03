@@ -2,7 +2,7 @@ import { ObjectError } from "./error/object.error";
 
 export type AcceptFunction = (error: Error) => boolean;
 
-export class Try<Response> {
+export class Try<Response> extends Promise<Response> {
   /**
    * The various catch
    *
@@ -10,19 +10,8 @@ export class Try<Response> {
    */
   private catchBlocks: Array<{types?: any; checker?: AcceptFunction, method: CallableFunction }> = [];
 
-  /**
-   * The function that contains the try {} body.
-   *
-   * @private
-   */
-  private tryFunction: () => Response = null;
-
-  /**
-   * The function that will be called finally {}.
-   *
-   * @private
-   */
-  private finallyFunction: CallableFunction = null;
+  private resolve: CallableFunction;
+  private reject: CallableFunction;
 
   /**
    * You should use the static try method to construct.
@@ -31,7 +20,58 @@ export class Try<Response> {
    * @private
    */
   private constructor(method) {
-    this.tryFunction = method;
+    let _reject: CallableFunction;
+
+    super((resolve, reject) => {
+      _reject = reject;
+      
+      const value = method();
+      resolve(value);
+
+      // super.catch(async (e) => {
+      //   // if it is not an error object, we will convert it
+      //   if (!(e instanceof Error)) {
+      //     e = new ObjectError("Non Error thrown as an error.", e);
+      //   }
+
+      //   // we need to sort the catch block, so the "null" (is catch all) type goes last
+      //   this.catchBlocks.sort((a, b) => {
+      //     if (a.checker || b.checker) {
+      //       return a.checker ? -1 : 1;
+      //     }
+
+      //     if (a.types.includes(null) && !b.types.includes(null)) {
+      //       return 1;
+      //     } else if (b.types.includes(null)) {
+      //       return -1;
+      //     }
+
+      //     return 0;
+      //   });
+
+      //   // find the first matching catch block
+      //   for (const catchBlock of this.catchBlocks) {
+      //     if (catchBlock.types) {
+      //       for (const acceptedType of catchBlock.types) {
+      //         if (acceptedType === null || e instanceof acceptedType) {
+      //           this.resolve(await catchBlock.method(e));
+      //         }
+      //       }
+      //     }
+
+      //     if (catchBlock.checker !== undefined) {
+      //       if (catchBlock.checker(e)) {
+      //         this.resolve(await catchBlock.method(e));
+      //       }
+      //     }
+      //   }
+
+      //   // no matching block, so throw the error
+      //   this.reject(e);
+      // });
+    });
+
+    this.reject = _reject;
   }
 
   /**
@@ -57,7 +97,7 @@ export class Try<Response> {
    *
    * @param method the catch block
    */
-  catch<ErrorResponse, T extends Try<Response> = this>(this: T, method: (error: Error) => ErrorResponse | Promise<ErrorResponse>): T;
+  _catch<ErrorResponse, T extends Try<Response> = this>(this: T, method: (error: Error) => ErrorResponse | Promise<ErrorResponse>): T;
 
   /**
    * Register a catch block for (a) specific error(s).
@@ -65,7 +105,7 @@ export class Try<Response> {
    * @param type the type of the error that this catch block accepts
    * @param method the catch block
    */
-  catch<E extends Error, ErrorResponse = void, T extends Try<Response> = this>(
+  _catch<E extends Error, ErrorResponse = void, T extends Try<Response> = this>(
     this: T,
     type: { new (...args): E } | { new (...args): E }[],
     method: (error: E) => ErrorResponse | Promise<ErrorResponse>
@@ -77,7 +117,7 @@ export class Try<Response> {
    * @param type the type of the error that this catch block accepts
    * @param method the catch block
    */
-  catch<E extends Error, ErrorResponse = void, T extends Try<Response> = this>(
+  _catch<E extends Error, ErrorResponse = void, T extends Try<Response> = this>(
     this: T,
     type: AcceptFunction,
     method: (error: E) => ErrorResponse | Promise<ErrorResponse>
@@ -89,7 +129,7 @@ export class Try<Response> {
    * @param param1
    * @param param2
    */
-  catch(param1 = null, param2 = null) {
+  _catch(param1 = null, param2 = null) {
     const method = param2 === null ? param1 : param2;
     let types = param2 !== null ? param1 : null;
 
@@ -102,69 +142,5 @@ export class Try<Response> {
     });
 
     return this;
-  }
-
-  /**
-   * Register a finally method
-   *
-   * @param method
-   */
-  async finally<T extends Try<Response>, FinallyResponse>(this: T, method: () => FinallyResponse | Promise<FinallyResponse>): Promise<Response> {
-    this.finallyFunction = method;
-
-    return this.run();
-  }
-
-  /**
-   * You only need to call run, if you don't register a finally method
-   */
-  async run<T extends Try<Response>>(this: T): Promise<Response> {
-    try {
-      return await this.tryFunction();
-    } catch (e: any) {
-      // if it is not an error object, we will convert it
-      if (!(e instanceof Error)) {
-        e = new ObjectError("Non Error thrown as an error.", e);
-      }
-
-      // we need to sort the catch block, so the "null" (is catch all) type goes last
-      this.catchBlocks.sort((a, b) => {
-        if (a.checker || b.checker) {
-          return a.checker ? -1 : 1;
-        }
-
-        if (a.types.includes(null) && !b.types.includes(null)) {
-          return 1;
-        } else if (b.types.includes(null)) {
-          return -1;
-        }
-
-        return 0;
-      });
-
-      // find the first matching catch block
-      for (const catchBlock of this.catchBlocks) {
-        if (catchBlock.types) {
-          for (const acceptedType of catchBlock.types) {
-            if (acceptedType === null || e instanceof acceptedType) {
-              return await catchBlock.method(e);
-            }
-          }
-        }
-
-        if (catchBlock.checker !== undefined) {
-          if (catchBlock.checker(e)) {
-            return await catchBlock.method(e);
-          }
-        }
-      }
-
-      // no matching block, so throw the error
-      throw e;
-    } finally {
-      if (this.finallyFunction !== null) {
-        await this.finallyFunction();
-      }
-    }
   }
 }
