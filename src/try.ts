@@ -1,4 +1,4 @@
-import { AsyncMethodError } from "@src/error/async.method.error";
+import { AsyncMethodError } from "./error/async.method.error";
 import { ObjectError } from "./error/object.error";
 
 export type AcceptFunction = (error: Error) => boolean;
