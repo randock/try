@@ -1,6 +1,6 @@
 {
   "name": "@randock/try",
-  "version": "0.0.8",
+  "version": "0.0.11",
   "description": "Typed try/catch in typescript",
   "author": "Jop Peters",
   "private": false,

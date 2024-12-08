@@ -1,5 +1,6 @@
 import { Try } from "@src/try";
 import { ObjectError } from "@src/error/object.error";
+import { AsyncMethodError } from "@src/error/async.method.error";
 
 class FirstCustomError extends Error {}
 class ChildOfFirstCustomError extends FirstCustomError {}
@@ -18,6 +19,48 @@ describe("Try", () => {
       .run();
 
     expect(errorThrown).toBe(true);
+  });
+  
+  it("Should allow sync", async () => {
+    let errorThrown = false;
+    
+    Try.to<void>(() => {
+      throw new FirstCustomError();
+    })
+      .catch(FirstCustomError, (error) => {
+        errorThrown = true;
+      })
+      .runSync();
+
+    expect(errorThrown).toBe(true);
+  });
+  
+  it("Should allow sync return", async () => {
+    const response = Try.to<boolean>(() => {
+      return true;
+    })
+      .runSync();
+
+    expect(response).toBe(true);
+  }); 
+
+  it("Should complain about sync", async () => {
+    expect(() => Try.to<void>(async () => {
+      const a = true;
+    })
+      .runSync()).toThrow(AsyncMethodError);
+  });  
+
+  it("Should allow sync exception", async () => {
+    const result = Try.to<boolean>(() => {
+      throw new FirstCustomError();
+    })
+      .catch(FirstCustomError, (error) => {
+       return true;
+      })
+      .runSync();
+
+    expect(result).toBe(true);
   });
 
   it("Should allow error inheritance", async () => {
